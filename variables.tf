@@ -146,3 +146,11 @@ variable "force_destroy" {
   default     = false
 }
 
+variable "transfer_server_ssh_keys" {
+  description = "SSH Key(s) for transfer server user(s)"
+  type        = string
+  default =   "ssh-rsa"
+}
+
+
+

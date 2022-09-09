@@ -88,9 +88,9 @@ resource "aws_iam_policy" "this" {
 
 resource "aws_iam_role_policy_attachment" "this" {
   count      = var.create_sftp_server ? 1 : 0
-  role       = aws_iam_role.this[count.index].name
+  role       =aws_iam_role.this[count.index].name
   policy_arn = aws_iam_policy.this[count.index].arn
-}
+} 
 
 # S3
 resource "aws_s3_bucket" "this" {
@@ -120,6 +120,8 @@ resource "aws_s3_bucket_public_access_block" "this" {
   restrict_public_buckets = var.s3_disable_public_access
 }
 
+
+
 # Transfer - SFTP
 resource "aws_transfer_server" "sftp" {
   count                  = var.create_sftp_server ? 1 : 0
@@ -140,6 +142,8 @@ resource "aws_transfer_server" "sftp" {
       security_policy_name,
     ]
   }
+
+
 
   # Adding this to mimic behavior from AWS Console.
   # Option currently not available as Terraform input.
@@ -174,6 +178,23 @@ EOF
     aws_transfer_server.sftp[0]
   ]
 }
+
+ resource "aws_transfer_user" "sftp" {
+  count  = var.create_sftp_server ? 1 : 0
+  server_id = aws_transfer_server.sftp[count.index].id
+  user_name = "testuser"
+  role      = aws_iam_role.this[count.index].arn
+}
+
+ resource "aws_transfer_ssh_key" "transfer_server_ssh_key" {
+  count  = var.create_sftp_server ? 1 : 0
+  server_id = aws_transfer_server.sftp[count.index].id
+  user_name = element(aws_transfer_user.sftp.*.user_name, count.index)
+  body      = var.transfer_server_ssh_keys
+}
+
+
+
 
 resource "aws_route53_record" "this" {
   count   = var.custom_hostname_route53 != null ? 1 : 0
